@@ -18,11 +18,11 @@ import android.widget.ListView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -59,7 +59,7 @@ public class MedicationFragment extends Fragment{
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-            FetchWeatherTask weatherTask = new FetchWeatherTask();
+            FetchMedicationTask weatherTask = new FetchMedicationTask();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             Log.i("Refresh", "Refreshed");
             weatherTask.execute();
@@ -78,7 +78,7 @@ public class MedicationFragment extends Fragment{
                         R.layout.list_item_details, // The name of the layout ID.
                         R.id.list_item_medication_textview, // The ID of the textview to populate.
                         patientArray);
-
+        updatePatient();
         final View rootView = inflater.inflate(R.layout.fragment_med_list, container, false);
         ListView listView = (ListView) rootView.findViewById(R.id.listview_medications);
         listView.setAdapter(mMedicationAdapter);
@@ -109,10 +109,10 @@ public class MedicationFragment extends Fragment{
 
 
     private void updatePatient() {
-//        FetchWeatherTask weatherTask = new FetchWeatherTask();
-//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-//        String location = "321231";
-//        weatherTask.execute(location);
+       FetchMedicationTask medicationTask = new FetchMedicationTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = "321231";
+        medicationTask.execute(location);
     }
 
     public static MedicationFragment newInstance (int sectionName){
@@ -129,9 +129,9 @@ public class MedicationFragment extends Fragment{
         //updatePatient();
     }
 
-    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+    public class FetchMedicationTask extends AsyncTask<String, Void, List<XmlParser.Entry>> {
 
-        private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
+        private final String LOG_TAG = FetchMedicationTask.class.getSimpleName();
 
         private String stripBracket(String str) {
             String newStr = null;
@@ -182,82 +182,55 @@ public class MedicationFragment extends Fragment{
             return age;
         }
 
-        /**
-         * Prepare the weather high/lows for presentation.
-         */
-
-        private String getJSONStringFromArray(JSONObject jsonObj, String array, String str) throws JSONException {
-            String rtnString = null;
-            JSONArray jsonArray = jsonObj.getJSONArray(array);
-            for (int n = 0; n < jsonArray.length(); n++) {
-                rtnString = jsonArray.getJSONObject(n).getString(str);
-                //Log.i("JSONObj", "Json Str: " + rtnString);
-            }
-            return rtnString;
-        }
-
-        /**
-         * Take the String representing the complete forecast in JSON Format and
-         * pull out the data we need to construct the Strings needed for the wireframes.
-         * <p/>
-         * Fortunately parsing is easy:  constructor takes the JSON string and converts it
-         * into an Object hierarchy for us.
-         */
-        private String[] getWeatherDataFromJson(String jsonStr, int numDays)
+        private String[] getUsableStringsFromJSON(String jsonStr, int numDays)
                 throws JSONException, ParseException {
 
-            // These are the names of the JSON objects that need to be extracted.
-            final String OWM_LIST = "entry";
-            final String OWM_resource = "resource";
-            final String OWM_GENDER = "gender";
-            final String OWM_BIRTHDATE = "birthDate";
-            final String NAME = "name"; //array
-            //final String OWM_DESCRIPTION = "main";
+            JSONObject wholeJson = new JSONObject(jsonStr);
+            JSONArray resourceArray = wholeJson.getJSONArray("entry");
 
-            JSONObject entryJson = new JSONObject(jsonStr);
-            JSONArray patientArray = entryJson.getJSONArray(OWM_LIST);
+            String[] resultStrs = new String[resourceArray.length()];
 
-
-            String[] resultStrs = new String[patientArray.length()];
-
-            for (int i = 0; i < patientArray.length(); i++) {
+            for (int i = 0; i < resourceArray.length(); i++) {
                 // For now, using the format "Day, description, hi/low"
-                String dob = null;
-                String names = null;
-                String gender;
+                String dateWritten = null;
+                String status = null;
+                String medicationReference = null;
                 String id;
                 String str1;
                 String str2;
 
                 // Get the JSON object representing the day
-                JSONObject patientObject = patientArray.getJSONObject(i);
+                JSONObject patientObject = resourceArray.getJSONObject(i);
                 //log.i("JSONObj", "patObj: " + patientObject.toString());
                 JSONObject resourceObject = patientObject.getJSONObject("resource");
 
                 // description is in a child array called "weather", which is 1 element long.
-                JSONArray nameArray = resourceObject.getJSONArray(NAME);
-                for (int n = 0; n < nameArray.length(); n++) {
+                JSONObject medicationObject = resourceObject.getJSONObject("medicationReference");
+                medicationReference = medicationObject.getString("display");
+                Log.i("Medication Resource", medicationReference);
 
-                    JSONObject nameObject = nameArray.getJSONObject(n);
-                    str1 = (nameObject.getString("family"));
-                    str2 = (nameObject.getString("given"));
-
-                    //String str1 = getJSONStringFromArray(nameObject, "family", "family");
-                    //String str2 = getJSONStringFromArray(nameObject, "given", "given");
-                    names = stripBracket(str1) + ", " + stripBracket(str2);
-
-                    // Temperatures are in a child object called "temp".  Try not to name variables
-                    // "temp" when working with temperature.  It confuses everybody.
-                    //JSONObject genderObject = resourceObject.getJSONObject(OWM_GENDER);
-                    gender = resourceObject.getString(OWM_GENDER);
-                    id = resourceObject.getString("id");
-                    // JSONObject dobOject = resourceObject.getJSONObject(OWM_BIRTHDATE);
-                    dob = resourceObject.getString(OWM_BIRTHDATE);
-                    Date parsedDob = parseDate(dob);
-                    int age = getAge(parsedDob);
-
-                    resultStrs[i] = id;
-                }
+//                for (int n = 0; n < nameArray.length(); n++) {
+//
+//                    JSONObject nameObject = nameArray.getJSONObject(n);
+//                    str1 = (nameObject.getString("family"));
+//                    str2 = (nameObject.getString("given"));
+//
+//                    //String str1 = getJSONStringFromArray(nameObject, "family", "family");
+//                    //String str2 = getJSONStringFromArray(nameObject, "given", "given");
+//                    names = stripBracket(str1) + ", " + stripBracket(str2);
+//
+//                    // Temperatures are in a child object called "temp".  Try not to name variables
+//                    // "temp" when working with temperature.  It confuses everybody.
+//                    //JSONObject genderObject = resourceObject.getJSONObject(OWM_GENDER);
+//                    gender = resourceObject.getString(OWM_GENDER);
+//                    id = resourceObject.getString("id");
+//                    // JSONObject dobOject = resourceObject.getJSONObject(OWM_BIRTHDATE);
+//                    dob = resourceObject.getString(OWM_BIRTHDATE);
+//                    Date parsedDob = parseDate(dob);
+//                    int age = getAge(parsedDob);
+//
+//                    resultStrs[i] = id;
+//                }
 
                 for (String s : resultStrs) {
                     //Log.v(LOG_TAG, "Patient entry: " + s);
@@ -269,7 +242,7 @@ public class MedicationFragment extends Fragment{
 
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected List<XmlParser.Entry> doInBackground(String... params) {
 
             // If there's no zip code, there's nothing to look up.  Verify size of params.
             if (params.length == 0) {
@@ -280,12 +253,10 @@ public class MedicationFragment extends Fragment{
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
-
-            String format = "json";
-            String units = "metric";
+            final String FORMAT = "?_format=json";
+            final String PATIENT_ID = "patient=Tbt3KuCY0B5PSrJvCu2j-PlK.aiHsu2xUjUM8bWpetXoB";
+            InputStream medicationJSONStr = null;
+            List<XmlParser.Entry> entries = null;
             int numDays = 7;
 
             try {
@@ -310,8 +281,8 @@ public class MedicationFragment extends Fragment{
 
                 //URL url = new URL(builtUri.toString());
 
-                URL url = new URL("https://navhealth.herokuapp.com/api/fhir/Patient/");
-                //Log.v(LOG_TAG, "Built URI: https://navhealth.herokuapp.com/api/fhir/Patient/");
+                URL url = new URL("https://open-ic.epic.com/FHIR/api/FHIR/DSTU2/MedicationOrder?patient=Tbt3KuCY0B5PSrJvCu2j-PlK.aiHsu2xUjUM8bWpetXoB");
+                Log.v(LOG_TAG, url.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -320,68 +291,42 @@ public class MedicationFragment extends Fragment{
 
                 // Read the input stream into a String
                 InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
+                medicationJSONStr = inputStream;
 
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                forecastJsonStr = buffer.toString();
+                Log.v(LOG_TAG, "Medication string: " + medicationJSONStr);
 
-                //  Log.v(LOG_TAG, "Forecast string: " + forecastJsonStr);
+
             } catch (ProtocolException e) {
                 e.printStackTrace();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
-                // to parse it.
-                return null;
+                e.printStackTrace();
+            }
+            try {
+                XmlParser myparser = new XmlParser();
+                try {
+                    entries = myparser.parseXml(medicationJSONStr);
+                } catch (XmlPullParserException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } finally {
-                if (urlConnection != null) {
+                if (urlConnection != null){
                     urlConnection.disconnect();
                 }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
             }
-
-            try {
-                return getWeatherDataFromJson(forecastJsonStr, numDays);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-
-            // This will only happen if there was an error getting or parsing the forecast.
-            return null;
+            return entries;
         }
 
+
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(List<XmlParser.Entry> result) {
             if (result != null) {
                 mMedicationAdapter.clear();
-                for (String dayForecastStr : result) {
+                for (XmlParser.Entry dayForecastStr : result) {
                     mMedicationAdapter.add(dayForecastStr);
                 }
             }
