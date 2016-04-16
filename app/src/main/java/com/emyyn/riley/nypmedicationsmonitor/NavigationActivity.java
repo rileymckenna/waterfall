@@ -152,7 +152,7 @@ public class NavigationActivity extends AppCompatActivity
                     return MedicationFragment.newInstance(position);
 
                 case 1:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return AppointmentsFragment.newInstance(position);
                 default:
                     break;
             }

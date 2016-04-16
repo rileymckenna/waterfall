@@ -1,5 +1,6 @@
 package com.emyyn.riley.nypmedicationsmonitor;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,7 +11,9 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,6 +30,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -36,7 +40,6 @@ import java.util.List;
  */
 public class MedicationFragment extends Fragment{
 
-    private DisplayAdapter adapter;
 
     public MedicationFragment() {
 
@@ -48,7 +51,7 @@ public class MedicationFragment extends Fragment{
 
     }
 
-    private ArrayAdapter<String> mForecastAdapter;
+    private ArrayAdapter<String> mMedicationAdapter;
     private static final String ARG_SECTION_NUMBER = "section_number";
 
     @Override
@@ -67,39 +70,49 @@ public class MedicationFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mForecastAdapter =
+
+        List<String> patientArray = getData();
+        mMedicationAdapter =
                 new ArrayAdapter<String>(
                         getActivity(), // The current context (this activity)
                         R.layout.list_item_details, // The name of the layout ID.
-                        R.id.tv_title, // The ID of the textview to populate.
-                        new ArrayList<String>());
+                        R.id.list_item_medication_textview, // The ID of the textview to populate.
+                        patientArray);
 
-        final View rootView = inflater.inflate(R.layout.fragment_item_list, container, false);
+        final View rootView = inflater.inflate(R.layout.fragment_med_list, container, false);
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_medications);
+        listView.setAdapter(mMedicationAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                String forecast = mMedicationAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
+            }
+        });
         return rootView;
     }
 
-    public static List<Patient> getData(){
-        List<Patient> data = new ArrayList<>();
+    public static List<String> getData(){
+
         String[] title = {"Lusie","David","Alex","Danielle","Courtney","Tom","Greg","Martha","Robert","Bethany","Clare","Annie","Anna"};
+        List<String> data = new ArrayList<String>(Arrays.asList(title));
+
         String[] dob = {"3/28/1990","1/14/2015","2/5/1989","5/9/1972","5/21/1991","5/17/1964","7/22/1954","6/18/1964","8/11/2006","6/26/1998","7/27/2000","11/28/1989","12/6/1987"};
         String[] id = {"654654654654654","32158497365241654","6359879841321489432","89746513214594923","97484562132165869","98762131231195674","987653213213165479451321","8979654635216584984","89746543215649421","9874651321654984621968","6549879413216846518","32134896574913198645","897961321354823158"};
-        for (int i = 0; i <title.length && i < dob.length && i < id.length; i++){
-            Patient current = new Patient();
-            current.given = title[i];
-            current.dob = dob[i];
-            current.id = id[i];
-            current.surname = "Smith";
-            data.add(current);
-        }
+
         return data;
     }
 
 
     private void updatePatient() {
-        FetchWeatherTask weatherTask = new FetchWeatherTask();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = "321231";
-        weatherTask.execute(location);
+//        FetchWeatherTask weatherTask = new FetchWeatherTask();
+//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+//        String location = "321231";
+//        weatherTask.execute(location);
     }
 
     public static MedicationFragment newInstance (int sectionName){
@@ -367,9 +380,9 @@ public class MedicationFragment extends Fragment{
         @Override
         protected void onPostExecute(String[] result) {
             if (result != null) {
-                mForecastAdapter.clear();
+                mMedicationAdapter.clear();
                 for (String dayForecastStr : result) {
-                    mForecastAdapter.add(dayForecastStr);
+                    mMedicationAdapter.add(dayForecastStr);
                 }
             }
         }
