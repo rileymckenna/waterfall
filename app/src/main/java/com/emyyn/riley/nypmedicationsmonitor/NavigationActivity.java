@@ -12,6 +12,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -124,7 +125,7 @@ public class NavigationActivity extends AppCompatActivity
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_tab, container, false);
-
+            Log.i("OnCreateView" , this.getClass().getSimpleName() + "before text view assignment");
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
 
@@ -149,7 +150,7 @@ public class NavigationActivity extends AppCompatActivity
             switch (position)
             {
                 case 0:
-                    return MedicationFragment.newInstance(position);
+                    return PlaceholderFragment.newInstance(position + 1);//MedicationFragment.newInstance(position);
 
                 case 1:
                     return AppointmentsFragment.newInstance(position);

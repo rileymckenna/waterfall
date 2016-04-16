@@ -29,7 +29,7 @@ public class MedicationAdapter<M> extends ArrayAdapter<Medication> {
         TextView tvName = (TextView) convertView.findViewById(R.id.tvName);
         TextView tvDosage = (TextView) convertView.findViewById(R.id.tvDosage);
         // Populate the data into the template view using the data object
-        tvName.setText("text");
+        //tvName.setText("text");
        // tvDosage.setText(med.dosageInstructions);
         // Return the completed view to render on screen
         return convertView;

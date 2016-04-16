@@ -16,15 +16,12 @@ import org.json.JSONException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -51,10 +48,10 @@ public class MedicationFragment extends Fragment{
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-            FetchMedicationTask weatherTask = new FetchMedicationTask();
+            FetchMedicationTask fetchMedication = new FetchMedicationTask();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             Log.i("Refresh", "Refreshed");
-            weatherTask.execute();
+            fetchMedication.execute();
         updateMedications();
             return true;
     }
@@ -62,8 +59,11 @@ public class MedicationFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i("OnCreate", "Before the Async Task");
         updateMedications();
+        Log.i("OnCreate", "After the Async Task");
         final View rootView = inflater.inflate(R.layout.fragment_med_list, container, false);
+        Log.i("OnCreate", "After the View");
 //        ArrayList<Medication> arrayOfMedications = new ArrayList<Medication>();
 //        mMedicationAdapter = new MedicationAdapter(this.getContext(), arrayOfMedications);
 //
@@ -82,23 +82,13 @@ public class MedicationFragment extends Fragment{
         return rootView;
     }
 
-    public static List<String> getData(){
-
-        String[] title = {"Lusie","David","Alex","Danielle","Courtney","Tom","Greg","Martha","Robert","Bethany","Clare","Annie","Anna"};
-        List<String> data = new ArrayList<String>(Arrays.asList(title));
-
-        String[] dob = {"3/28/1990","1/14/2015","2/5/1989","5/9/1972","5/21/1991","5/17/1964","7/22/1954","6/18/1964","8/11/2006","6/26/1998","7/27/2000","11/28/1989","12/6/1987"};
-        String[] id = {"654654654654654","32158497365241654","6359879841321489432","89746513214594923","97484562132165869","98762131231195674","987653213213165479451321","8979654635216584984","89746543215649421","9874651321654984621968","6549879413216846518","32134896574913198645","897961321354823158"};
-
-        return data;
-    }
 
 
     private void updateMedications() {
        FetchMedicationTask medicationTask = new FetchMedicationTask();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = "321231";
-        medicationTask.execute(location);
+        //String location = "321231";
+        medicationTask.execute();
     }
 
     public static MedicationFragment newInstance (int sectionName){
@@ -118,22 +108,7 @@ public class MedicationFragment extends Fragment{
     public class FetchMedicationTask extends AsyncTask<String, Void, List<Medication>> {
 
         private final String LOG_TAG = FetchMedicationTask.class.getSimpleName();
-        private InputStream buffer;
-
-        private Date parseDate(String dateTimeStr)
-                throws ParseException {
-
-            String s = dateTimeStr.replace("Z", "+00:00");
-            try {
-                s = s.substring(0, 22) + s.substring(23);
-            } catch (IndexOutOfBoundsException e) {
-                throw new ParseException("Invalid length", 0);
-            }
-            Date date = new SimpleDateFormat("yyyy-MM-dd").parse(s);
-            //DateFormat df = new SimpleDateFormat("MMM dd, yyyy");
-            //String returnDate = df.format(date);
-            return date;
-        }
+        private StringBuffer buffer;
 
         @Override
         protected List<Medication> doInBackground(String... params) {
@@ -155,12 +130,31 @@ public class MedicationFragment extends Fragment{
 
             try {
 
-                URL url = new URL("https://open-ic.epic.com/FHIR/api/FHIR/DSTU2/MedicationOrder?patient=Tbt3KuCY0B5PSrJvCu2j-PlK.aiHsu2xUjUM8bWpetXoB&_format=json");
+                URL url = new URL("https://open-ic.epic.com/FHIR/api/FHIR/DSTU2/MedicationOrder?"+PATIENT_ID+"&_format=json");
                 Log.v(LOG_TAG, url.toString());
 
                 inputStream = downloadUrl(url.toString());
+                buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return null;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
 
-                Log.v(LOG_TAG, "Medication string: " + inputStream);
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    return null;
+                }
+
+                Log.v(LOG_TAG, "Medication string: " + buffer.toString());
 
 
             } catch (ProtocolException e) {
@@ -171,12 +165,14 @@ public class MedicationFragment extends Fragment{
                 e.printStackTrace();
             }
             try {
-                XmlParser myparser = new XmlParser();
+                MyJsonParser jsonParser = new MyJsonParser();
                 try {
-                    entries = myparser.parseJSON(inputStream);
+                    entries = jsonParser.parseJSON(buffer.toString());
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (ParseException e) {
                     e.printStackTrace();
                 }
             } finally {
