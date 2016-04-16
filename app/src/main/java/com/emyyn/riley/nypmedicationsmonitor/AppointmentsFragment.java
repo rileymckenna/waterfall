@@ -45,7 +45,7 @@ public class AppointmentsFragment  extends Fragment {
                     new ArrayAdapter<String>(
                             getActivity(), // The current context (this activity)
                             R.layout.list_item_details, // The name of the layout ID.
-                            R.id.list_item_medication_textview, // The ID of the textview to populate.
+                            R.id.tv_id, // The ID of the textview to populate.
                             patientArray);
 
             final View rootView = inflater.inflate(R.layout.fragment_med_list, container, false);
