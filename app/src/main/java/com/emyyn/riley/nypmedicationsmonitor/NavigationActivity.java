@@ -1,5 +1,7 @@
 package com.emyyn.riley.nypmedicationsmonitor;
 
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -24,13 +26,14 @@ public class NavigationActivity extends AppCompatActivity
     private NavigationView navigationView=null;
     private Toolbar toolbar=null;
     private SectionsPagerAdapter mSectionsPagerAdapter = null;
+    private TabLayout tabLayout;
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation);
-
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -53,6 +56,9 @@ public class NavigationActivity extends AppCompatActivity
             super.onBackPressed();
         }
     }
+    public void updateTitle(){
+
+    }
 
     public void createTabs(){
 //        Create the adapter that will return a fragment for each of the three
@@ -64,8 +70,40 @@ public class NavigationActivity extends AppCompatActivity
         ViewPager mViewPager = (ViewPager) findViewById(R.id.vp_container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+        tabLayout.getTabAt(0).setIcon(R.drawable.ic_group_work);
+        tabLayout.getTabAt(0).setContentDescription("Medications");
+        tabLayout.getTabAt(1).setIcon(R.drawable.ic_group_work);
+        tabLayout.getTabAt(1).setContentDescription("Appointments");
+        tabLayout.getTabAt(2).setIcon(R.drawable.ic_group_work);
+        tabLayout.getTabAt(2).setContentDescription("Histoy");
+
+        tabLayout.getTabAt(0).getIcon().setColorFilter(Color.LTGRAY, PorterDuff.Mode.SRC_IN);
+        tabLayout.getTabAt(1).getIcon().setColorFilter(Color.DKGRAY, PorterDuff.Mode.SRC_IN);
+        tabLayout.getTabAt(2).getIcon().setColorFilter(Color.DKGRAY, PorterDuff.Mode.SRC_IN);
+
+
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                toolbar.setTitle(tab.getContentDescription());
+                tab.getIcon().setColorFilter(Color.LTGRAY, PorterDuff.Mode.SRC_IN);
+
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                toolbar.setTitle(tab.getContentDescription());
+                tab.getIcon().setColorFilter(Color.DKGRAY, PorterDuff.Mode.SRC_IN);
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -128,7 +166,7 @@ public class NavigationActivity extends AppCompatActivity
             Log.i("OnCreateView" , this.getClass().getSimpleName() + "before text view assignment");
             TextView textView = (TextView) rootView.findViewById(R.id.section_label);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-
+            Log.i(this.getClass().getSimpleName() , this.getClass().getSimpleName() + " after text view assignment");
             return rootView;
         }
     }
@@ -150,10 +188,12 @@ public class NavigationActivity extends AppCompatActivity
             switch (position)
             {
                 case 0:
-                    return PlaceholderFragment.newInstance(position + 1);//MedicationFragment.newInstance(position);
+                    return MedicationFragment.newInstance(position+1);//MedicationFragment.newInstance(position);
 
                 case 1:
-                    return AppointmentsFragment.newInstance(position);
+                    return PlaceholderFragment.newInstance(position+1);
+                case 2:
+                    return PlaceholderFragment.newInstance(position+1);
                 default:
                     break;
             }
@@ -169,13 +209,14 @@ public class NavigationActivity extends AppCompatActivity
 
         @Override
         public CharSequence getPageTitle(int position) {
+
             switch (position) {
                 case 0:
-                    return "Medications";
+                    return "";
                 case 1:
-                    return "Appointments";
+                    return "";
                 case 2:
-                    return "History";
+                    return "";
             }
             return null;
         }

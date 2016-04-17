@@ -5,4 +5,6 @@
     <color name="colorAccent">#ffffff</color>
     <color name="colorTextSmall">#ee3026</color>
     <color name="colorTextLarge">#323232</color>
+    <color name="icon_light">#ffffff</color>
+    <color name="icon_light_inactive">#242424</color>
 </resources>

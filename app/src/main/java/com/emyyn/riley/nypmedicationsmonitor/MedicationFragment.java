@@ -1,5 +1,6 @@
 package com.emyyn.riley.nypmedicationsmonitor;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ListView;
 
 import org.json.JSONException;
 
@@ -22,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -64,21 +68,21 @@ public class MedicationFragment extends Fragment{
         Log.i("OnCreate", "After the Async Task");
         final View rootView = inflater.inflate(R.layout.fragment_med_list, container, false);
         Log.i("OnCreate", "After the View");
-//        ArrayList<Medication> arrayOfMedications = new ArrayList<Medication>();
-//        mMedicationAdapter = new MedicationAdapter(this.getContext(), arrayOfMedications);
-//
-//        ListView listView = (ListView) rootView.findViewById(R.id.listview_medications);
-//        listView.setAdapter(mMedicationAdapter);
-//
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-//                Medication meds = mMedicationAdapter.getItem(position);
-//                Intent intent = new Intent(getActivity(), DetailActivity.class);
-//                startActivity(intent);
-//            }
-//        });
+        ArrayList<Medication> arrayOfMedications = new ArrayList<Medication>();
+        mMedicationAdapter = new MedicationAdapter(this.getContext(), arrayOfMedications);
+
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_medications);
+        listView.setAdapter(mMedicationAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                Medication meds = mMedicationAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                startActivity(intent);
+            }
+        });
         return rootView;
     }
 
