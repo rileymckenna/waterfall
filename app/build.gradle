@@ -28,5 +28,8 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:1.+'
     compile 'com.android.support:support-v4:23.2.1'
     compile 'com.android.support:recyclerview-v7:23.2.1'
+    compile (group: 'ca.uhn.hapi.fhir', name: 'hapi-fhir-android', version: '1.4', classifier: 'dstu2') {
+        exclude module: 'javax.servlet-api'
+        exclude module: 'hapi-fhir-base'}
 
 }

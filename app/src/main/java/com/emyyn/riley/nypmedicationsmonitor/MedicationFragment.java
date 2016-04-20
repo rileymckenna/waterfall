@@ -1,18 +1,18 @@
 package com.emyyn.riley.nypmedicationsmonitor;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.json.JSONException;
 
@@ -28,11 +28,14 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * Created by Riley on 4/14/2016.
  */
-public class MedicationFragment extends Fragment{
+public class MedicationFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
+
+    private SwipeRefreshLayout swipeLayout= null;
 
     public MedicationFragment() {
 
@@ -44,55 +47,75 @@ public class MedicationFragment extends Fragment{
 
     }
 
-    private MedicationAdapter<Medication> mMedicationAdapter;
+    public static ArrayList<Medication> getmMedicationArray() {
+        return mMedicationArray;
+    }
+
+    private static ArrayList<Medication> mMedicationArray;
+    private MedicationAdapter mMedicationAdapter;
     private static final String ARG_SECTION_NUMBER = "section_number";
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-            FetchMedicationTask fetchMedication = new FetchMedicationTask();
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            Log.i("Refresh", "Refreshed");
-            fetchMedication.execute();
-        updateMedications();
-            return true;
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.i("OnCreate", "Before the Async Task");
-        updateMedications();
+
         Log.i("OnCreate", "After the Async Task");
-        final View rootView = inflater.inflate(R.layout.fragment_med_list, container, false);
+        final View rootView = inflater.inflate(R.layout.fragment_tab, container, false);
         Log.i("OnCreate", "After the View");
-        ArrayList<Medication> arrayOfMedications = new ArrayList<Medication>();
-        mMedicationAdapter = new MedicationAdapter(this.getContext(), arrayOfMedications);
+        mMedicationArray = new ArrayList<>();
+        updateMedications();
+        try {
+            Log.i("Sleeping", "Sleeping for 4000 ms");
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            Log.i("Medications", mMedicationArray.get(0).getDosageInstructions());
+        }catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        mMedicationAdapter = new MedicationAdapter(this.getContext(), mMedicationArray);
+        TextView textView = (TextView) rootView.findViewById(R.id.section_label);
 
-        ListView listView = (ListView) rootView.findViewById(R.id.listview_medications);
-        listView.setAdapter(mMedicationAdapter);
+        swipeLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_container);
+        swipeLayout.setOnRefreshListener(this);
+        swipeLayout.setColorSchemeColors(Color.LTGRAY,
+                Color.DKGRAY, Color.RED);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        if (mMedicationArray.size()> 0) {
+            //textView.setText(capitalizeFirstLetter(mMedicationArray.get(0).getMedicationReference()));
+            ListView listView = (ListView) rootView.findViewById(R.id.lv_details);
+            listView.setAdapter(mMedicationAdapter);
+            //mMedicationAdapter.addAll(mMedicationArray);
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Medication meds = mMedicationAdapter.getItem(position);
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                startActivity(intent);
-            }
-        });
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                    Medication meds = mMedicationAdapter.getItem(position);
+                    Intent intent = new Intent(getActivity(), DetailActivity.class);
+                    intent.putExtra("med", meds);
+                    startActivity(intent);
+                }
+            });
+        } else
+        {
+            Log.i("No meds", "Did not update");
+            textView.setText("No Medications are avaiable at this time");
+        }
+
         return rootView;
     }
 
 
 
-    private void updateMedications() {
+    public void updateMedications() {
        FetchMedicationTask medicationTask = new FetchMedicationTask();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         //String location = "321231";
-        medicationTask.execute();
+        medicationTask.execute("65445");
     }
 
     public static MedicationFragment newInstance (int sectionName){
@@ -103,19 +126,27 @@ public class MedicationFragment extends Fragment{
         return medicationFragment;
     }
 
+
+
     @Override
     public void onStart() {
         super.onStart();
         //updatePatient();
     }
 
-    public class FetchMedicationTask extends AsyncTask<String, Void, List<Medication>> {
+    @Override
+    public void onRefresh() {
+        updateMedications();
+
+    }
+
+    public class FetchMedicationTask extends AsyncTask<String , Void, List<Medication>> {
 
         private final String LOG_TAG = FetchMedicationTask.class.getSimpleName();
         private StringBuffer buffer;
 
         @Override
-        protected List<Medication> doInBackground(String... params) {
+        protected ArrayList<Medication> doInBackground(String... params) {
 
             // If there's no zip code, there's nothing to look up.  Verify size of params.
             if (params.length == 0) {
@@ -127,14 +158,14 @@ public class MedicationFragment extends Fragment{
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             final String FORMAT = "?_format=json";
-            final String PATIENT_ID = "patient=Tbt3KuCY0B5PSrJvCu2j-PlK.aiHsu2xUjUM8bWpetXoB";
+            final String PATIENT_ID = "patient=21613";
             InputStream inputStream = null;
-            List<Medication> entries = null;
+            //List<Medication> entries = null;
             int numDays = 7;
 
             try {
 
-                URL url = new URL("https://open-ic.epic.com/FHIR/api/FHIR/DSTU2/MedicationOrder?"+PATIENT_ID+"&_format=json");
+                URL url = new URL("http://fhirtest.uhn.ca/baseDstu2/MedicationOrder?"+PATIENT_ID+"&_format=json&_raw=true");
                 Log.v(LOG_TAG, url.toString());
 
                 inputStream = downloadUrl(url.toString());
@@ -171,7 +202,8 @@ public class MedicationFragment extends Fragment{
             try {
                 MyJsonParser jsonParser = new MyJsonParser();
                 try {
-                    entries = jsonParser.parseJSON(buffer.toString());
+                    mMedicationArray = jsonParser.parseJSON(buffer.toString());
+                    Log.i("MedFragment" , mMedicationArray.get(0).getDosageInstructions());
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (JSONException e) {
@@ -184,7 +216,7 @@ public class MedicationFragment extends Fragment{
                     urlConnection.disconnect();
                 }
             }
-            return entries;
+            return mMedicationArray;
 
 
         }

@@ -23,11 +23,11 @@ import android.widget.TextView;
 
 public class NavigationActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-    private NavigationView navigationView=null;
-    private Toolbar toolbar=null;
+
+    private NavigationView navigationView = null;
+    private Toolbar toolbar = null;
     private SectionsPagerAdapter mSectionsPagerAdapter = null;
     private TabLayout tabLayout;
-
 
 
     @Override
@@ -56,11 +56,8 @@ public class NavigationActivity extends AppCompatActivity
             super.onBackPressed();
         }
     }
-    public void updateTitle(){
 
-    }
-
-    public void createTabs(){
+    public void createTabs() {
 //        Create the adapter that will return a fragment for each of the three
 //        primary sections of the activity.
 
@@ -72,11 +69,11 @@ public class NavigationActivity extends AppCompatActivity
 
         tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
-        tabLayout.getTabAt(0).setIcon(R.drawable.ic_group_work);
+        tabLayout.getTabAt(0).setIcon(R.drawable.pharmacy);
         tabLayout.getTabAt(0).setContentDescription("Medications");
-        tabLayout.getTabAt(1).setIcon(R.drawable.ic_group_work);
+        tabLayout.getTabAt(1).setIcon(R.drawable.timetable);
         tabLayout.getTabAt(1).setContentDescription("Appointments");
-        tabLayout.getTabAt(2).setIcon(R.drawable.ic_group_work);
+        tabLayout.getTabAt(2).setIcon(R.drawable.history);
         tabLayout.getTabAt(2).setContentDescription("Histoy");
 
         tabLayout.getTabAt(0).getIcon().setColorFilter(Color.LTGRAY, PorterDuff.Mode.SRC_IN);
@@ -113,14 +110,11 @@ public class NavigationActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        if (id == R.id.nav_alerts) {
 //            TabFragment tabFragment = new TabFragment();
 //            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 //            fragmentTransaction.replace(R.id.tab_fragment, tabFragment);
 //            fragmentTransaction.commit();
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
 
@@ -162,11 +156,11 @@ public class NavigationActivity extends AppCompatActivity
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_tab, container, false);
-            Log.i("OnCreateView" , this.getClass().getSimpleName() + "before text view assignment");
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+            View rootView = inflater.inflate(R.layout.fragment_details, container, false);
+            Log.i("OnCreateView", this.getClass().getSimpleName() + "before text view assignment");
+            TextView textView = (TextView) rootView.findViewById(R.id.detail_text);
             textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            Log.i(this.getClass().getSimpleName() , this.getClass().getSimpleName() + " after text view assignment");
+            Log.i(this.getClass().getSimpleName(), this.getClass().getSimpleName() + " after text view assignment");
             return rootView;
         }
     }
@@ -185,20 +179,17 @@ public class NavigationActivity extends AppCompatActivity
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            switch (position)
-            {
+            switch (position) {
                 case 0:
-                    return MedicationFragment.newInstance(position+1);//MedicationFragment.newInstance(position);
-
+                    return MedicationFragment.newInstance(position);//MedicationFragment.newInstance(position);
                 case 1:
-                    return PlaceholderFragment.newInstance(position+1);
+                    return PlaceholderFragment.newInstance(position + 1);
                 case 2:
-                    return PlaceholderFragment.newInstance(position+1);
+                    return PlaceholderFragment.newInstance(position + 1);
                 default:
                     break;
             }
-            return  PlaceholderFragment.newInstance(position + 1);
-
+            return null;
         }
 
         @Override

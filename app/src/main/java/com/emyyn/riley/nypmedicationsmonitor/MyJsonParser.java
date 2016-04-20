@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import ca.uhn.fhir.context.FhirContext;
+
 /**
  * This class parses XML feeds from stackoverflow.com.
  * Given an InputStream representation of a feed, it returns a List of entries,
@@ -38,15 +40,16 @@ public class MyJsonParser {
 
     public ArrayList<Medication> parseJSON (String jsonStr) throws JSONException, IOException, ParseException {
         // These are the names of the JSON objects that need to be extracted.
-        final String OWM_LIST = "entry";
+        final String MED_LIST = "entry";
         final String OWM_resource = "quantity";
         final String OWM_GENDER = "gender";
         final String OWM_BIRTHDATE = "birthDate";
         final String NAME = "name"; //array
         //final String OWM_DESCRIPTION = "main";
+        FhirContext ctx = new FhirContext();
 
         JSONObject entryJson = new JSONObject(jsonStr);
-        JSONArray patientArray = entryJson.getJSONArray(OWM_LIST);
+        JSONArray patientArray = entryJson.getJSONArray(MED_LIST);
         medicationArrayList = new ArrayList<Medication>(patientArray.length());
 
         //String[] resultStrs = new String[patientArray.length()];
@@ -83,6 +86,8 @@ public class MyJsonParser {
         }
         return rtnString;
     }
+
+
     public static Date parseDate(String dateTimeStr)
             throws ParseException {
 

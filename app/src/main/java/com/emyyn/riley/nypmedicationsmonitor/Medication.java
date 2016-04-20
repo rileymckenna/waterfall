@@ -6,15 +6,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
 
+import static android.text.TextUtils.concat;
 import static com.emyyn.riley.nypmedicationsmonitor.MyJsonParser.parseDate;
 
 /**
  * Created by Riley on 4/16/2016.
  */
-public class Medication {
+public class Medication implements Serializable{
     public String getQuantity() {
         return quantity;
     }
@@ -87,9 +89,20 @@ public class Medication {
         this.doseQuantity = doseQuantity;
     }
 
-    public  String quantity;
-    public  String expectedSupplyDuration ;
-    public  String medicationReference;
+    public String quantity;
+    public String expectedSupplyDuration;
+    public String medicationReference;
+
+    public String getShortTitle() {
+        shortTitle = getMedicationShortTitle(medicationReference);
+        return shortTitle;
+    }
+
+    public void setShortTitle(String shortTitle) {
+        this.shortTitle = shortTitle;
+    }
+
+    public String shortTitle;
 
     public int getFrequency() {
         return frequency;
@@ -115,15 +128,15 @@ public class Medication {
         this.periodUnits = periodUnits;
     }
 
-    public  String dispenseRequest;
+    public String dispenseRequest;
     public String dosageInstructions;
-    public  String route ;
-    public  String method;
+    public String route;
+    public String method;
     public String timing;
     public int frequency;
     public int period;
     public String periodUnits;
-    public  String doseQuantity;
+    public String doseQuantity;
 
     public Date getStart() {
         return start;
@@ -146,7 +159,7 @@ public class Medication {
 
     public Medication(String quantity, String expectedSupplyDuration, String medicationReference, String dispenseRequest, String dosageInstructions, String route, String method, String timing, String doseQuantity, int period, int frequency, String periodUnits, Date e, Date s) {
         this.quantity = quantity;
-        this.expectedSupplyDuration  = expectedSupplyDuration ;
+        this.expectedSupplyDuration = expectedSupplyDuration;
         this.medicationReference = medicationReference;
         this.dispenseRequest = dispenseRequest;
         this.dosageInstructions = dosageInstructions;
@@ -159,32 +172,34 @@ public class Medication {
         this.periodUnits = periodUnits;
         this.start = s;
         this.end = e;
+        this.shortTitle = shortTitle;
     }
 
-    public String getMedicationReference(String medicationReference){
+    public String getMedicationReference(String medicationReference) {
         return medicationReference;
     }
 
     public Medication() {
 
     }
-    public static Medication fromJson (JSONObject jsonObject) throws JSONException, ParseException {
+
+    public static Medication fromJson(JSONObject jsonObject) throws JSONException, ParseException {
         Medication m = new Medication();
         String tempStr;
         String d = "display";
         String t = "text";
         String v = "value";
 
-        try
-        {
+        try {
             //Log.i("JSONObj", "medObj: " + jsonObject.toString());
             //JSONObject resourceObject = jsonObject.getJSONObject("resource");
             //This action is replaced with the method getObject which takes the JsonObject and returns its display value
             //tempStr = jsonObject.getJSONObject("medicationReference").getString("display");
             //Log.i("JSONObj", "medObj: " + jsonObject.getJSONObject("medicationReference").toString());
-           // Log.i("JSONObj", "medOrderObj: " + tempStr);
+            // Log.i("JSONObj", "medOrderObj: " + tempStr);
 
             m.setMedicationReference(getMedicationObject(jsonObject, "medicationReference", d));
+            Log.i("Medication Reference", m.getMedicationReference().toString());
             //m.setDosageInstructions(getMedicationObject(jsonObject, "dosageInstructions", t));
             JSONObject dispenseObj = jsonObject.getJSONObject("dispenseRequest");
             m.setExpectedSupplyDuration(getMedicationObject(dispenseObj, "expectedSupplyDuration", v));
@@ -195,24 +210,43 @@ public class Medication {
             m.setStart(parseDate(start));
             m.setEnd(parseDate(end));
 
-           //Handler the Array for Dosage Instructions
+            //Handler the Array for Dosage Instructions
             JSONArray dosageArray = jsonObject.getJSONArray("dosageInstruction");
             JSONObject dosageObject = dosageArray.getJSONObject(0);
+            m.setDosageInstructions(dosageObject.getString(t));
+            Log.i("Instructions", m.getDosageInstructions().toString());
             m.setRoute(getMedicationObject(dosageObject, "route", t));
             m.setMethod(getMedicationObject(dosageObject, "method", t));
             //Handler for the Object Timing to return the FREQUENCY, PERIOD, and PERIODUNITS
             JSONObject timingObj = dosageObject.getJSONObject("timing");
             m.setPeriodUnits(getMedicationObject(timingObj, "repeat", "periodUnits"));
             m.setFrequency(Integer.parseInt(getMedicationObject(timingObj, "repeat", "frequency")));
-            int x = (int)(Double.parseDouble(getMedicationObject(timingObj, "repeat", "period")));
+            int x = (int) (Double.parseDouble(getMedicationObject(timingObj, "repeat", "period")));
             m.setPeriod(x);
 
 
 
-        }catch (JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
         return m;
+    }
+
+    public String getMedicationShortTitle (String str) {
+        String temp;
+        int start= 0;
+        int end = 0;
+        for (int i = 0; i < str.length(); i ++){
+            if (str.charAt(i) == '(' ){
+                start = i+1;
+            }else if (str.charAt(i) == ')'){
+                end = i;
+            }
+        }
+        temp = str.substring(start, end);
+        temp.toLowerCase();
+        temp = capitalizeFirstLetter(temp);
+        return temp;
     }
 
     public static String getMedicationObject(JSONObject j, String resource, String value) throws JSONException {
@@ -220,4 +254,15 @@ public class Medication {
         tempStr = j.getJSONObject(resource).getString(value);
         return tempStr;
     }
+
+    public String capitalizeFirstLetter ( String input){
+        String temp = input;
+        int end = temp.length();
+        Character capital = temp.charAt(0);
+        String notCapital = temp.substring(1, end);
+        capital = Character.toUpperCase(capital);
+        temp = (String) concat(capital.toString(), notCapital);
+        return temp;
+    }
+
 }
