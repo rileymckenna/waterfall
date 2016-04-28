@@ -146,8 +146,8 @@ public class MedicationFragment extends Fragment implements SwipeRefreshLayout.O
         private StringBuffer buffer;
 
         @Override
-        protected ArrayList<Medication> doInBackground(String... params) {
 
+            protected ArrayList<Medication> doInBackground(String... params) {
             // If there's no zip code, there's nothing to look up.  Verify size of params.
             if (params.length == 0) {
                 return null;
